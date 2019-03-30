@@ -27,9 +27,9 @@ chage -l liuhaozzu #列出该账号的详细密码参数
 chage -d 0 username # 实际修改了shadow第三位
 
 # usermod 
-账号信息微调
-usermode -e "2019-03-30" test
-
+账号信息微调  
+usermode -e "2019-03-30" test  
+usermode -a -G wheel username  
 # userdel
 -r #连同用户的家目录也一同删掉
 
