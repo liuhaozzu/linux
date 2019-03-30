@@ -10,10 +10,10 @@ useradd -r systemaccount
 ### useradd 命令会参考 /etc/default/useradd  /etc/login.defs  /etc/skel/* 这些文件
 
 # passwd
--n 后面跟天数，shadow第四位，多久不可以修改密码
--x 后面跟天数，shadow第5位，多久内必须修改密码
--w 后面跟天数，shadow第6位，过期前的警告天数
--l 后面跟 日期，shadow第7位，密码失效日期
+-n 后面跟天数，shadow第四位，多久不可以修改密码  
+-x 后面跟天数，shadow第5位，多久内必须修改密码  
+-w 后面跟天数，shadow第6位，过期前的警告天数  
+-l 后面跟 日期，shadow第7位，密码失效日期  
 
 1. root 可以修改任何用户的密码，而不需要知道该用户的当前密码
 2. passwd -S liuhaozzu # 列出密码相关参数
