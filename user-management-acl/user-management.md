@@ -20,3 +20,29 @@ useradd -r systemaccount
 3. passwd -l liuhaozzu # 锁定该账户，暂时无法登陆
 4. passwd -u liuhaozzu # 解锁
 
+# chage
+详细显示密码参数  
+chage -l liuhaozzu #列出该账号的详细密码参数
+## 用户在第一次登录时，强制他一定要改密码
+chage -d 0 username # 实际修改了shadow第三位
+
+# usermod 
+账号信息微调
+usermode -e "2019-03-30" test
+
+# userdel
+-r #连同用户的家目录也一同删掉
+
+# id
+查询UID，GID
+
+# chsh
+change shell  
+-l 列出目前系统上可用的shell  
+-s 修改自己的shell
+
+# groupadd
+# groupdel
+# groupmod
+# gpasswd
+
