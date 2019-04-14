@@ -24,6 +24,15 @@ function：
 6. [liuhaozzu@centos7-1 ~]$ /sbin/ifconfig eth1|grep inet|sed 's/^.*inet//g'| sed 's/ *netmask.*$//g' # 找出ip
 7. sed -i 's/\.$/\!/g' regular_express.txt # 若行尾为. ,则替换为!
 
+### 常用sed命令
+/pattern/p 打印匹配pattern的行  
+/pattern/d 删除匹配pattern的行  
+/pattern/s/pattern1/pattern2/ 查找符合pattern的行，将该行***第一个***匹配pattern1的字符串替换为pattern2  
+/pattern/s/pattern1/pattern2/g 查找符合pattern的行，将该行***所有***匹配pattern1的字符串替换为pattern2  
+1. sed 's/bc/-&-/' testfile #pattern2中的&表示原文件的当前行中与pattern1相匹配的字符串
+2. sed 's/\([0-9]\)\([0-9]\)/-\1-~\2~/' testfile # pattern2中的\1表示与pattern1的第一个()括号相匹配的内容，\2表示与pattern1的第二个()括号相匹配的内容。sed默认使用Basic正则表达式规范，如果指定了-r选项则使用Extended规范，那么()括号就不必转义了。
+
+
 # awk
 ## 内置变量
 $0，代表当前行  
