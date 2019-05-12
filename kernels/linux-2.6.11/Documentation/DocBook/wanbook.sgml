@@ -1,0 +1,471 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN"[]>
+
+<book id="WANGuide">
+ <bookinfo>
+  <title>Synchronous PPP and Cisco HDLC Programming Guide</title>
+  
+  <authorgroup>
+   <author>
+    <firstname>Alan</firstname>
+    <surname>Cox</surname>
+    <affiliation>
+     <address>
+      <email>alan@redhat.com</email>
+     </address>
+    </affiliation>
+   </author>
+  </authorgroup>
+
+  <copyright>
+   <year>2000</year>
+   <holder>Alan Cox</holder>
+  </copyright>
+
+  <legalnotice>
+   <para>
+     This documentation is free software; you can redistribute
+     it and/or modify it under the terms of the GNU General Public
+     License as published by the Free Software Foundation; either
+     version 2 of the License, or (at your option) any later
+     version.
+   </para>
+      
+   <para>
+     This program is distributed in the hope that it will be
+     useful, but WITHOUT ANY WARRANTY; without even the implied
+     warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+     See the GNU General Public License for more details.
+   </para>
+      
+   <para>
+     You should have received a copy of the GNU General Public
+     License along with this program; if not, write to the Free
+     Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+     MA 02111-1307 USA
+   </para>
+      
+   <para>
+     For more details see the file COPYING in the source
+     distribution of Linux.
+   </para>
+  </legalnotice>
+ </bookinfo>
+
+<toc></toc>
+
+  <chapter id="intro">
+      <title>Introduction</title>
+  <para>
+	The syncppp drivers in Linux provide a fairly complete 
+	implementation of Cisco HDLC and a minimal implementation of
+	PPP. The longer term goal is to switch the PPP layer to the
+	generic PPP interface that is new in Linux 2.3.x. The API should
+	remain unchanged when this is done, but support will then be
+	available for IPX, compression and other PPP features
+  </para>
+  </chapter>
+  <chapter id="bugs">
+     <title>Known Bugs And Assumptions</title>
+  <para>
+  <variablelist>
+    <varlistentry><term>PPP is minimal</term>
+    <listitem>
+    <para>
+	The current PPP implementation is very basic, although sufficient
+	for most wan usages.
+    </para>
+    </listitem></varlistentry>
+
+    <varlistentry><term>Cisco HDLC Quirks</term>
+    <listitem>
+    <para>
+	Currently we do not end all packets with the correct Cisco multicast
+	or unicast flags. Nothing appears to mind too much but this should
+	be corrected.
+    </para>
+    </listitem></varlistentry>
+  </variablelist>
+	
+  </para>
+  </chapter>
+
+  <chapter id="pubfunctions">
+     <title>Public Functions Provided</title>
+<!-- drivers/net/wan/syncppp.c -->
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sppp-input">sppp_input</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sppp_input</refname>
+ <refpurpose>
+  	receive and process a WAN PPP frame
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>sppp_input </function></funcdef>
+   <paramdef>struct net_device * <parameter>dev</parameter></paramdef>
+   <paramdef>struct sk_buff * <parameter>skb</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>dev</parameter></term>
+   <listitem>
+    <para>
+     	The device it arrived on
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>skb</parameter></term>
+   <listitem>
+    <para>
+     	The buffer to process
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   This can be called directly by cards that do not have
+   timing constraints but is normally called from the network layer
+   after interrupt servicing to process frames queued via <function>netif_rx</function>.
+   </para><para>
+
+   We process the options in the card. If the frame is destined for
+   the protocol stacks then it requeues the frame for the upper level
+   protocol. If it is a control from it is processed and discarded
+   here.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sppp-close">sppp_close</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sppp_close</refname>
+ <refpurpose>
+      close down a synchronous PPP or Cisco HDLC link
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>sppp_close </function></funcdef>
+   <paramdef>struct net_device * <parameter>dev</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>dev</parameter></term>
+   <listitem>
+    <para>
+      The network device to drop the link of
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   This drops the logical interface to the channel. It is not
+   done politely as we assume we will also be dropping DTR. Any
+   timeouts are killed.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sppp-open">sppp_open</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sppp_open</refname>
+ <refpurpose>
+      open a synchronous PPP or Cisco HDLC link
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>sppp_open </function></funcdef>
+   <paramdef>struct net_device * <parameter>dev</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>dev</parameter></term>
+   <listitem>
+    <para>
+     	Network device to activate
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Close down any existing synchronous session and commence
+   from scratch. In the PPP case this means negotiating LCP/IPCP
+   and friends, while for Cisco HDLC we simply need to start sending
+   keepalives
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sppp-reopen">sppp_reopen</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sppp_reopen</refname>
+ <refpurpose>
+      notify of physical link loss
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>sppp_reopen </function></funcdef>
+   <paramdef>struct net_device * <parameter>dev</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>dev</parameter></term>
+   <listitem>
+    <para>
+      Device that lost the link
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   This function informs the synchronous protocol code that
+   the underlying link died (for example a carrier drop on X.21)
+   </para><para>
+
+   We increment the magic numbers to ensure that if the other end
+   failed to notice we will correctly start a new session. It happens
+   do to the nature of telco circuits is that you can lose carrier on
+   one endonly.
+   </para><para>
+
+   Having done this we go back to negotiating. This function may
+   be called from an interrupt context.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sppp-change-mtu">sppp_change_mtu</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sppp_change_mtu</refname>
+ <refpurpose>
+      Change the link MTU
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>sppp_change_mtu </function></funcdef>
+   <paramdef>struct net_device * <parameter>dev</parameter></paramdef>
+   <paramdef>int <parameter>new_mtu</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>dev</parameter></term>
+   <listitem>
+    <para>
+     	Device to change MTU on
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>new_mtu</parameter></term>
+   <listitem>
+    <para>
+      New MTU
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Change the MTU on the link. This can only be called with
+   the link down. It returns an error if the link is up or
+   the mtu is out of range.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sppp-do-ioctl">sppp_do_ioctl</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sppp_do_ioctl</refname>
+ <refpurpose>
+      Ioctl handler for ppp/hdlc
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>sppp_do_ioctl </function></funcdef>
+   <paramdef>struct net_device * <parameter>dev</parameter></paramdef>
+   <paramdef>struct ifreq * <parameter>ifr</parameter></paramdef>
+   <paramdef>int <parameter>cmd</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>dev</parameter></term>
+   <listitem>
+    <para>
+      Device subject to ioctl
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>ifr</parameter></term>
+   <listitem>
+    <para>
+      Interface request block from the user
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>cmd</parameter></term>
+   <listitem>
+    <para>
+      Command that is being issued
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   This function handles the ioctls that may be issued by the user
+   to control the settings of a PPP/HDLC link. It does both busy
+   and security checks. This function is intended to be wrapped by
+   callers who wish to add additional ioctl calls of their own.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sppp-attach">sppp_attach</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sppp_attach</refname>
+ <refpurpose>
+      attach synchronous PPP/HDLC to a device
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>sppp_attach </function></funcdef>
+   <paramdef>struct ppp_device * <parameter>pd</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>pd</parameter></term>
+   <listitem>
+    <para>
+     	PPP device to initialise
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   This initialises the PPP/HDLC support on an interface. At the
+   time of calling the dev element must point to the network device
+   that this interface is attached to. The interface should not yet
+   be registered. 
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sppp-detach">sppp_detach</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sppp_detach</refname>
+ <refpurpose>
+      release PPP resources from a device
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>sppp_detach </function></funcdef>
+   <paramdef>struct net_device * <parameter>dev</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>dev</parameter></term>
+   <listitem>
+    <para>
+     	Network device to release
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Stop and free up any PPP/HDLC resources used by this
+   interface. This must be called before the device is
+   freed.
+ </para>
+</refsect1>
+</refentry>
+
+  </chapter>
+
+</book>

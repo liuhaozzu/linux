@@ -1,0 +1,113 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
+
+<!-- BEGINFRONTTAG: The following is front matter for the parent book -->
+<!-- <bookinfo> -->
+<!--  -->
+<!-- <title>SiS 900/7016 Fast Ethernet Device Driver</Title> -->
+<!--  -->
+<!-- <authorgroup> -->
+<!-- <author> -->
+<!-- <FirstName>Ollie</FirstName> -->
+<!-- <surname>Lho</surname> -->
+<!-- </author> -->
+<!--  -->
+<!-- <author> -->
+<!-- <FirstName>Lei Chun</FirstName> -->
+<!-- <surname>Chang</surname> -->
+<!-- </author> -->
+<!-- </authorgroup> -->
+<!--  -->
+<!-- <edition>Document Revision: 0.3 for SiS900 driver v1.06 & v1.07</edition> -->
+<!-- <PubDate>November 16, 2000</PubDate> -->
+<!--  -->
+<!-- <copyright> -->
+<!--  <year>1999</year> -->
+<!--  <holder>Silicon Integrated System Corp.</holder> -->
+<!-- </copyright> -->
+<!--  -->
+<!-- <legalnotice> -->
+<!--  <para> -->
+<!-- 	This program is free software; you can redistribute it and/or modify -->
+<!-- 	it under the terms of the GNU General Public License as published by -->
+<!-- 	the Free Software Foundation; either version 2 of the License, or -->
+<!-- 	(at your option) any later version. -->
+<!--  </para> -->
+<!--  -->
+<!--  <para> -->
+<!-- 	This program is distributed in the hope that it will be useful, -->
+<!-- 	but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- 	GNU General Public License for more details. -->
+<!--  </para> -->
+<!--  -->
+<!--  <para> -->
+<!-- 	You should have received a copy of the GNU General Public License -->
+<!-- 	along with this program; if not, write to the Free Software -->
+<!-- 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA -->
+<!--  </para> -->
+<!-- </legalnotice> -->
+<!--  -->
+<!-- <Abstract> -->
+<!-- <Para> -->
+<!-- This document gives some information on installation and usage of SiS 900/7016 -->
+<!-- device driver under Linux. -->
+<!-- </Para> -->
+<!-- </Abstract> -->
+<!--  -->
+<!-- </bookinfo> -->
+
+<!-- ENDFRONTTAG: End front matter -->
+
+<refentry>
+<refmeta>
+
+<refentrytitle><phrase id="API-sis900-set-capability">sis900_set_capability</phrase></refentrytitle>
+<manvolnum>9</manvolnum>
+</refmeta>
+<refnamediv>
+ <refname>sis900_set_capability</refname>
+ <refpurpose>
+      set the media capability of network adapter.
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>sis900_set_capability </function></funcdef>
+   <paramdef>struct net_device * <parameter>net_dev</parameter></paramdef>
+   <paramdef>struct mii_phy * <parameter>phy</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>net_dev</parameter></term>
+   <listitem>
+    <para>
+      the net device to probe for
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>phy</parameter></term>
+   <listitem>
+    <para>
+      default PHY
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Set the media capability of network adapter according to
+   mii status register. It's necessary before auto-negotiate.
+ </para>
+</refsect1>
+<refsect1><title>About this document</title>
+<para>
+This documentation was generated with kernel version 2.6.11.
+</para>
+</refsect1>
+</refentry>

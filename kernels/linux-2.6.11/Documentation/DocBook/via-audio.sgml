@@ -1,0 +1,1931 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN"[]>
+
+<book id="ViaAudioGuide">
+ <bookinfo>
+  <title>Via 686 Audio Driver for Linux</title>
+  
+  <authorgroup>
+   <author>
+    <firstname>Jeff</firstname>
+    <surname>Garzik</surname>
+   </author>
+  </authorgroup>
+
+  <copyright>
+   <year>1999-2001</year>
+   <holder>Jeff Garzik</holder>
+  </copyright>
+
+  <legalnotice>
+   <para>
+     This documentation is free software; you can redistribute
+     it and/or modify it under the terms of the GNU General Public
+     License as published by the Free Software Foundation; either
+     version 2 of the License, or (at your option) any later
+     version.
+   </para>
+      
+   <para>
+     This program is distributed in the hope that it will be
+     useful, but WITHOUT ANY WARRANTY; without even the implied
+     warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+     See the GNU General Public License for more details.
+   </para>
+      
+   <para>
+     You should have received a copy of the GNU General Public
+     License along with this program; if not, write to the Free
+     Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+     MA 02111-1307 USA
+   </para>
+      
+   <para>
+     For more details see the file COPYING in the source
+     distribution of Linux.
+   </para>
+  </legalnotice>
+ </bookinfo>
+
+<toc></toc>
+
+  <chapter id="intro">
+      <title>Introduction</title>
+  <para>
+  	The Via VT82C686A "super southbridge" chips contain
+	AC97-compatible audio logic which features dual 16-bit stereo
+	PCM sound channels (full duplex), plus a third PCM channel intended for use
+	in hardware-assisted FM synthesis.
+  </para>
+  <para>
+  	The current Linux kernel audio driver for this family of chips
+	supports audio playback and recording, but hardware-assisted
+	FM features, and hardware buffer direct-access (mmap)
+	support are not yet available.
+  </para>
+  <para>
+  	This driver supports any Linux kernel version after 2.4.10.
+  </para>
+  <para>
+	Please send bug reports to the mailing list <email>linux-via@gtf.org</email>.
+	To subscribe, e-mail <email>majordomo@gtf.org</email> with
+  </para>
+  <programlisting>
+	subscribe linux-via
+  </programlisting>
+  <para>
+	in the body of the message.
+  </para>
+  </chapter>
+  
+  <chapter id="install">
+      <title>Driver Installation</title>
+  <para>
+  	To use this audio driver, select the
+	CONFIG_SOUND_VIA82CXXX option in the section Sound during kernel configuration.
+	Follow the usual kernel procedures for rebuilding the kernel,
+	or building and installing driver modules.
+  </para>
+  <para>
+  	To make this driver the default audio driver, you can add the
+	following to your /etc/conf.modules file:
+  </para>
+  <programlisting>
+	alias sound via82cxxx_audio
+  </programlisting>
+  <para>
+  	Note that soundcore and ac97_codec support modules
+	are also required for working audio, in addition to
+	the via82cxxx_audio module itself.
+  </para>
+  </chapter>
+  
+  <chapter id="reportbug">
+      <title>Submitting a bug report</title>
+  <sect1 id="bugrepdesc"><title>Description of problem</title>
+  <para>
+	Describe the application you were using to play/record sound, and how
+	to reproduce the problem.
+  </para>
+  </sect1>
+  <sect1 id="bugrepdiag"><title>Diagnostic output</title>
+  <para>
+	Obtain the via-audio-diag diagnostics program from
+	http://sf.net/projects/gkernel/ and provide a dump of the
+	audio chip's registers while the problem is occurring.  Sample command line:
+  </para>
+  <programlisting>
+	./via-audio-diag -aps > diag-output.txt
+  </programlisting>
+  </sect1>
+  <sect1 id="bugrepdebug"><title>Driver debug output</title>
+  <para>
+	Define <constant>VIA_DEBUG</constant> at the beginning of the driver, then capture and email
+	the kernel log output.  This can be viewed in the system kernel log (if
+	enabled), or via the dmesg program.  Sample command line:
+  </para>
+  <programlisting>
+	dmesg > /tmp/dmesg-output.txt
+  </programlisting>
+  </sect1>
+  <sect1 id="bugrepprintk"><title>Bigger kernel message buffer</title>
+  <para>
+	If you wish to increase the size of the buffer displayed by dmesg, then
+	change the <constant>LOG_BUF_LEN</constant> macro at the top of linux/kernel/printk.c, recompile
+	your kernel, and pass the <constant>LOG_BUF_LEN</constant> value to dmesg.  Sample command line with
+	<constant>LOG_BUF_LEN</constant> == 32768:
+  </para>
+  <programlisting>
+	dmesg -s 32768 > /tmp/dmesg-output.txt
+  </programlisting>
+  </sect1>
+  </chapter>
+  
+  <chapter id="bugs">
+     <title>Known Bugs And Assumptions</title>
+  <para>
+  <variablelist>
+    <varlistentry><term>Low volume</term>
+    <listitem>
+    <para>
+	Volume too low on many systems.  Workaround:  use mixer program
+	such as xmixer to increase volume.
+    </para>
+    </listitem></varlistentry>
+
+  </variablelist>
+	
+  </para>
+  </chapter>
+
+  <chapter id="thanks">
+      <title>Thanks</title>
+  <para>
+	Via for providing e-mail support, specs, and NDA'd source code.
+  </para>
+  <para>
+	MandrakeSoft for providing hacking time.
+  </para>
+  <para>
+	AC97 mixer interface fixes and debugging by Ron Cemer <email>roncemer@gte.net</email>.
+  </para>
+  <para>
+	Rui Sousa <email>rui.sousa@conexant.com</email>, for bugfixing
+	MMAP support, and several other notable fixes that resulted from
+	his hard work and testing.
+  </para>
+  <para>
+	Adrian Cox <email>adrian@humboldt.co.uk</email>, for bugfixing
+	MMAP support, and several other notable fixes that resulted from
+	his hard work and testing.
+  </para>
+  <para>
+  	Thomas Sailer for further bugfixes.
+  </para>
+  </chapter>
+  
+  <chapter id="notes">
+     <title>Random Notes</title>
+  <para>
+	Two /proc pseudo-files provide diagnostic information.  This is generally
+	not useful to most users.  Power users can disable CONFIG_SOUND_VIA82CXXX_PROCFS,
+	and remove the /proc support code.  Once
+	version 2.0.0 is released, the /proc support code will be disabled by
+	default.  Available /proc pseudo-files:
+  </para>
+  <programlisting>
+	/proc/driver/via/0/info
+	/proc/driver/via/0/ac97
+  </programlisting>
+  <para>
+	This driver by default supports all PCI audio devices which report
+	a vendor id of 0x1106, and a device id of 0x3058.  Subsystem vendor
+	and device ids are not examined.
+  </para>
+  <para>
+	GNU indent formatting options:
+  <programlisting>
+-kr -i8 -ts8 -br -ce -bap -sob -l80 -pcs -cs -ss -bs -di1 -nbc -lp -psl
+  </programlisting>
+  </para>
+  <para>
+	Via has graciously donated e-mail support and source code to help further
+	the development of this driver.  Their assistance has been invaluable
+	in the design and coding of the next major version of this driver.
+  </para>
+  <para>
+	The Via audio chip apparently provides a second PCM scatter-gather
+	DMA channel just for FM data, but does not have a full hardware MIDI
+	processor.  I haven't put much thought towards a solution here, but it
+	might involve using SoftOSS midi wave table, or simply disabling MIDI
+	support altogether and using the FM PCM channel as a second (input? output?)
+  </para>
+  </chapter>
+
+  <chapter id="changelog">
+      <title>Driver ChangeLog</title>
+
+<sect1 id="version191"><title>
+Version 1.9.1
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+    DSP read/write bugfixes from Thomas Sailer.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Add new PCI id for single-channel use of Via 8233.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Other bug fixes, tweaks, new ioctls.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version1115"><title>
+Version 1.1.15
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+    Support for variable fragment size and variable fragment number (Rui
+    Sousa)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Fixes for the SPEED, STEREO, CHANNELS, FMT ioctls when in read &
+    write mode (Rui Sousa)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Mmaped sound is now fully functional. (Rui Sousa)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Make sure to enable PCI device before reading any of its PCI
+    config information. (fixes potential hotplug problems)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Clean up code a bit and add more internal function documentation.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    AC97 codec access fixes (Adrian Cox)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Big endian fixes (Adrian Cox)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    MIDI support (Adrian Cox)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Detect and report locked-rate AC97 codecs.  If your hardware only
+    supports 48Khz (locked rate), then your recording/playback software
+    must upsample or downsample accordingly.  The hardware cannot do it.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Use new pci_request_regions and pci_disable_device functions in
+    kernel 2.4.6.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version1114"><title>
+Version 1.1.14
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+    Use VM_RESERVE when available, to eliminate unnecessary page faults.
+    </para>
+   </listitem>
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version1112"><title>
+Version 1.1.12
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+    mmap bug fixes from Linus.
+    </para>
+   </listitem>
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version1111"><title>
+Version 1.1.11
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+    Many more bug fixes.  mmap enabled by default, but may still be buggy.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Uses new and spiffy method of mmap'ing the DMA buffer, based
+    on a suggestion from Linus.
+    </para>
+   </listitem>
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version1110"><title>
+Version 1.1.10
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+    Many bug fixes.  mmap enabled by default, but may still be buggy.
+    </para>
+   </listitem>
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version119"><title>
+Version 1.1.9
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+    Redesign and rewrite audio playback implementation.  (faster and smaller, hopefully)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Implement recording and full duplex (DSP_CAP_DUPLEX) support.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Make procfs support optional.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Quick interrupt status check, to lessen overhead in interrupt
+    sharing situations.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Add mmap(2) support.  Disabled for now, it is still buggy and experimental.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Surround all syscalls with a semaphore for cheap and easy SMP protection.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Fix bug in channel shutdown (hardware channel reset) code.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Remove unnecessary spinlocks (better performance).
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Eliminate "unknown AFMT" message by using a different method
+    of selecting the best AFMT_xxx sound sample format for use.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Support for realtime hardware pointer position reporting
+    (DSP_CAP_REALTIME, SNDCTL_DSP_GETxPTR ioctls)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Support for capture/playback triggering
+    (DSP_CAP_TRIGGER, SNDCTL_DSP_SETTRIGGER ioctls)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    SNDCTL_DSP_SETDUPLEX and SNDCTL_DSP_POST ioctls now handled.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Rewrite open(2) and close(2) logic to allow only one user at
+    a time.  All other open(2) attempts will sleep until they succeed.
+    FIXME: open(O_RDONLY) and open(O_WRONLY) should be allowed to succeed.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Reviewed code to ensure that SMP and multiple audio devices
+    are fully supported.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version118"><title>
+Version 1.1.8
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+    	Clean up interrupt handler output.  Fixes the following kernel error message:
+    </para>
+  	<programlisting>
+	unhandled interrupt ...
+  	</programlisting>
+   </listitem>
+
+   <listitem>
+    <para>
+    	Convert documentation to DocBook, so that PDF, HTML and PostScript (.ps) output is readily
+	available.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version117"><title>
+Version 1.1.7
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+ Fix module unload bug where mixer device left registered
+  after driver exit
+    </para>
+   </listitem>
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version116"><title>
+Version 1.1.6
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+ Rewrite via_set_rate to mimic ALSA basic AC97 rate setting
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+ Remove much dead code
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+ Complete spin_lock_irqsave -> spin_lock_irq conversion in via_dsp_ioctl
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+ Fix build problem in via_dsp_ioctl
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+ Optimize included headers to eliminate headers found in linux/sound
+	</para>
+   </listitem>
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version115"><title>
+Version 1.1.5
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+ Disable some overly-verbose debugging code
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+ Remove unnecessary sound locks
+   </para>
+   </listitem>
+   <listitem>
+    <para>
+ Fix some ioctls for better time resolution
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+ Begin spin_lock_irqsave -> spin_lock_irq conversion in via_dsp_ioctl
+    </para>
+   </listitem>
+  </itemizedlist>
+</sect1>
+
+<sect1 id="version114"><title>
+Version 1.1.4
+</title>
+  <itemizedlist spacing="compact">
+   <listitem>
+    <para>
+ Completed rewrite of driver.  Eliminated SoundBlaster compatibility
+  completely, and now uses the much-faster scatter-gather DMA engine.
+    </para>
+   </listitem>
+  </itemizedlist>
+</sect1>
+
+  </chapter>
+  
+  <chapter id="intfunctions">
+     <title>Internal Functions</title>
+<!-- sound/oss/via82cxxx_audio.c -->
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-stop">via_chan_stop</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_stop</refname>
+ <refpurpose>
+   Terminate DMA on specified PCM channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_stop </function></funcdef>
+   <paramdef>long <parameter>iobase</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>iobase</parameter></term>
+   <listitem>
+    <para>
+      PCI base address for SGD channel registers
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Terminate scatter-gather DMA operation for given
+   channel (derived from <parameter>iobase</parameter>), if DMA is active.
+   </para><para>
+
+   Note that <parameter>iobase</parameter> is not the PCI base address,
+   but the PCI base address plus an offset to
+   one of three PCM channels supported by the chip.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-status-clear">via_chan_status_clear</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_status_clear</refname>
+ <refpurpose>
+      Clear status flags on specified DMA channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_status_clear </function></funcdef>
+   <paramdef>long <parameter>iobase</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>iobase</parameter></term>
+   <listitem>
+    <para>
+      PCI base address for SGD channel registers
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Clear any pending status flags for the given
+   DMA channel (derived from <parameter>iobase</parameter>), if any
+   flags are asserted.
+   </para><para>
+
+   Note that <parameter>iobase</parameter> is not the PCI base address,
+   but the PCI base address plus an offset to
+   one of three PCM channels supported by the chip.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-sg-begin">sg_begin</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>sg_begin</refname>
+ <refpurpose>
+      Begin recording or playback on a PCM channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>sg_begin </function></funcdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel for which DMA operation shall begin
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Start scatter-gather DMA for the given channel.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-syscall-down">via_syscall_down</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_syscall_down</refname>
+ <refpurpose>
+      down the card-specific syscell semaphore
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_syscall_down </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>int <parameter>nonblock</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>nonblock</parameter></term>
+   <listitem>
+    <para>
+      boolean, non-zero if O_NONBLOCK is set
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Encapsulates standard method of acquiring the syscall sem.
+   </para><para>
+
+   Returns negative errno on error, or zero for success.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-stop-everything">via_stop_everything</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_stop_everything</refname>
+ <refpurpose>
+      Stop all audio operations
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_stop_everything </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Stops all DMA operations and interrupts, and clear
+   any pending status bits resulting from those operations.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-set-rate">via_set_rate</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_set_rate</refname>
+ <refpurpose>
+      Set PCM rate for given channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_set_rate </function></funcdef>
+   <paramdef>struct ac97_codec * <parameter>ac97</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+   <paramdef>unsigned <parameter>rate</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>ac97</parameter></term>
+   <listitem>
+    <para>
+      Pointer to generic codec info struct
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified channel
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>rate</parameter></term>
+   <listitem>
+    <para>
+      Desired PCM sample rate, in Khz
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Sets the PCM sample rate for a channel.
+   </para><para>
+
+   Values for <parameter>rate</parameter> are clamped to a range of 4000 Khz through 48000 Khz,
+   due to hardware constraints.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-init-defaults">via_chan_init_defaults</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_init_defaults</refname>
+ <refpurpose>
+      Initialize a struct via_channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_init_defaults </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private audio chip info
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel to be initialized
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Zero <parameter>chan</parameter>, and then set all static defaults for the structure.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-init">via_chan_init</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_init</refname>
+ <refpurpose>
+      Initialize PCM channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_init </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private audio chip info
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel to be initialized
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Performs some of the preparations necessary to begin
+   using a PCM channel.
+   </para><para>
+
+   Currently the preparations consist of
+   setting the PCM channel to a known state.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-buffer-init">via_chan_buffer_init</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_buffer_init</refname>
+ <refpurpose>
+      Initialize PCM channel buffer
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_chan_buffer_init </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private audio chip info
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel to be initialized
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Performs some of the preparations necessary to begin
+   using a PCM channel.
+   </para><para>
+
+   Currently the preparations include allocating the
+   scatter-gather DMA table and buffers,
+   and passing the
+   address of the DMA table to the hardware.
+   </para><para>
+
+   Note that special care is taken when passing the
+   DMA table address to hardware, because it was found
+   during driver development that the hardware did not
+   always <quote>take</quote> the address.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-free">via_chan_free</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_free</refname>
+ <refpurpose>
+      Release a PCM channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_free </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private audio chip info
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel to be released
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Performs all the functions necessary to clean up
+   an initialized channel.
+   </para><para>
+
+   Currently these functions include disabled any
+   active DMA operations, setting the PCM channel
+   back to a known state, and releasing any allocated
+   sound buffers.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-pcm-fmt">via_chan_pcm_fmt</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_pcm_fmt</refname>
+ <refpurpose>
+      Update PCM channel settings
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_pcm_fmt </function></funcdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+   <paramdef>int <parameter>reset</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel to be updated
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>reset</parameter></term>
+   <listitem>
+    <para>
+      Boolean.  If non-zero, channel will be reset
+     to 8-bit mono mode.
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Stores the settings of the current PCM format,
+   8-bit or 16-bit, and mono/stereo, into the
+   hardware settings for the specified channel.
+   If <parameter>reset</parameter> is non-zero, the channel is reset
+   to 8-bit mono mode.  Otherwise, the channel
+   is set to the values stored in the channel
+   information struct <parameter>chan</parameter>.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-clear">via_chan_clear</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_clear</refname>
+ <refpurpose>
+      Stop DMA channel operation, and reset pointers
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_clear </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      the chip to accessed
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel to be cleared
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Call via_chan_stop to halt DMA operations, and then resets
+   all software pointers which track DMA operation.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-set-speed">via_chan_set_speed</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_set_speed</refname>
+ <refpurpose>
+      Set PCM sample rate for given channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_chan_set_speed </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+   <paramdef>int <parameter>val</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel whose sample rate will be adjusted
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>val</parameter></term>
+   <listitem>
+    <para>
+      New sample rate, in Khz
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Helper function for the <constant>SNDCTL_DSP_SPEED</constant> ioctl.  OSS semantics
+   demand that all audio operations halt (if they are not already
+   halted) when the <constant>SNDCTL_DSP_SPEED</constant> is given.
+   </para><para>
+
+   This function halts all audio operations for the given channel
+   <parameter>chan</parameter>, and then calls via_set_rate to set the audio hardware
+   to the new rate.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-set-fmt">via_chan_set_fmt</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_set_fmt</refname>
+ <refpurpose>
+      Set PCM sample size for given channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_chan_set_fmt </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+   <paramdef>int <parameter>val</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel whose sample size will be adjusted
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>val</parameter></term>
+   <listitem>
+    <para>
+      New sample size, use the <constant>AFMT_xxx</constant> constants
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Helper function for the <constant>SNDCTL_DSP_SETFMT</constant> ioctl.  OSS semantics
+   demand that all audio operations halt (if they are not already
+   halted) when the <constant>SNDCTL_DSP_SETFMT</constant> is given.
+   </para><para>
+
+   This function halts all audio operations for the given channel
+   <parameter>chan</parameter>, and then calls via_chan_pcm_fmt to set the audio hardware
+   to the new sample size, either 8-bit or 16-bit.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-set-stereo">via_chan_set_stereo</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_set_stereo</refname>
+ <refpurpose>
+      Enable or disable stereo for a DMA channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_chan_set_stereo </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+   <paramdef>int <parameter>val</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel whose stereo setting will be adjusted
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>val</parameter></term>
+   <listitem>
+    <para>
+      New sample size, use the <constant>AFMT_xxx</constant> constants
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Helper function for the <constant>SNDCTL_DSP_CHANNELS</constant> and <constant>SNDCTL_DSP_STEREO</constant> ioctls.  OSS semantics
+   demand that all audio operations halt (if they are not already
+   halted) when <constant>SNDCTL_DSP_CHANNELS</constant> or SNDCTL_DSP_STEREO is given.
+   </para><para>
+
+   This function halts all audio operations for the given channel
+   <parameter>chan</parameter>, and then calls via_chan_pcm_fmt to set the audio hardware
+   to enable or disable stereo.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-dump-bufs">via_chan_dump_bufs</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_dump_bufs</refname>
+ <refpurpose>
+      Display DMA table contents
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_dump_bufs </function></funcdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel whose DMA table will be displayed
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Debugging function which displays the contents of the
+   scatter-gather DMA table for the given channel <parameter>chan</parameter>.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-flush-frag">via_chan_flush_frag</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_flush_frag</refname>
+ <refpurpose>
+      Flush partially-full playback buffer to hardware
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_flush_frag </function></funcdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel whose DMA table will be flushed
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Flushes partially-full playback buffer to hardware.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-chan-maybe-start">via_chan_maybe_start</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_chan_maybe_start</refname>
+ <refpurpose>
+      Initiate audio hardware DMA operation
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_chan_maybe_start </function></funcdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel whose DMA is to be started
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Initiate DMA operation, if the DMA engine for the given
+   channel <parameter>chan</parameter> is not already active.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-ac97-wait-idle">via_ac97_wait_idle</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_ac97_wait_idle</refname>
+ <refpurpose>
+      Wait until AC97 codec is not busy
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>u8 <function>via_ac97_wait_idle </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Sleep until the AC97 codec is no longer busy.
+   Returns the final value read from the SGD
+   register being polled.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-ac97-read-reg">via_ac97_read_reg</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_ac97_read_reg</refname>
+ <refpurpose>
+      Read AC97 standard register
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>u16 <function>via_ac97_read_reg </function></funcdef>
+   <paramdef>struct ac97_codec * <parameter>codec</parameter></paramdef>
+   <paramdef>u8 <parameter>reg</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>codec</parameter></term>
+   <listitem>
+    <para>
+      Pointer to generic AC97 codec info
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>reg</parameter></term>
+   <listitem>
+    <para>
+      Index of AC97 register to be read
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Read the value of a single AC97 codec register,
+   as defined by the Intel AC97 specification.
+   </para><para>
+
+   Defines the standard AC97 read-register operation
+   required by the kernel's ac97_codec interface.
+   </para><para>
+
+   Returns the 16-bit value stored in the specified
+   register.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-ac97-write-reg">via_ac97_write_reg</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_ac97_write_reg</refname>
+ <refpurpose>
+      Write AC97 standard register
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_ac97_write_reg </function></funcdef>
+   <paramdef>struct ac97_codec * <parameter>codec</parameter></paramdef>
+   <paramdef>u8 <parameter>reg</parameter></paramdef>
+   <paramdef>u16 <parameter>value</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>codec</parameter></term>
+   <listitem>
+    <para>
+      Pointer to generic AC97 codec info
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>reg</parameter></term>
+   <listitem>
+    <para>
+      Index of AC97 register to be written
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>value</parameter></term>
+   <listitem>
+    <para>
+      Value to be written to AC97 register
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Write the value of a single AC97 codec register,
+   as defined by the Intel AC97 specification.
+   </para><para>
+
+   Defines the standard AC97 write-register operation
+   required by the kernel's ac97_codec interface.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-intr-channel">via_intr_channel</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_intr_channel</refname>
+ <refpurpose>
+      handle an interrupt for a single channel
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>void <function>via_intr_channel </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      unused
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      handle interrupt for this channel
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   This is the <quote>meat</quote> of the interrupt handler,
+   containing the actions taken each time an interrupt
+   occurs.  All communication and coordination with
+   userspace takes place here.
+ </para>
+</refsect1>
+<refsect1>
+ <title>Locking</title>
+ <para>
+    inside card-&gt;lock
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-interrupt-init">via_interrupt_init</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_interrupt_init</refname>
+ <refpurpose>
+      Initialize interrupt handling
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_interrupt_init </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Obtain and reserve IRQ for using in handling audio events.
+   Also, disable any IRQ-generating resources, to make sure
+   we don't get interrupts before we want them.
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-dsp-drain-playback">via_dsp_drain_playback</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_dsp_drain_playback</refname>
+ <refpurpose>
+      sleep until all playback samples are flushed
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_dsp_drain_playback </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+   <paramdef>int <parameter>nonblock</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      Channel to drain
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>nonblock</parameter></term>
+   <listitem>
+    <para>
+      boolean, non-zero if O_NONBLOCK is set
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Sleeps until all playback has been flushed to the audio
+   hardware.
+ </para>
+</refsect1>
+<refsect1>
+ <title>Locking</title>
+ <para>
+    inside card-&gt;syscall_sem
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-dsp-ioctl-space">via_dsp_ioctl_space</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_dsp_ioctl_space</refname>
+ <refpurpose>
+      get information about channel buffering
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_dsp_ioctl_space </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+   <paramdef>void __user * <parameter>arg</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      pointer to channel-specific info
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>arg</parameter></term>
+   <listitem>
+    <para>
+      user buffer for returned information
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Handles SNDCTL_DSP_GETISPACE and SNDCTL_DSP_GETOSPACE.
+ </para>
+</refsect1>
+<refsect1>
+ <title>Locking</title>
+ <para>
+    inside card-&gt;syscall_sem
+ </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+<refentrytitle><phrase id="API-via-dsp-ioctl-ptr">via_dsp_ioctl_ptr</phrase></refentrytitle>
+</refmeta>
+<refnamediv>
+ <refname>via_dsp_ioctl_ptr</refname>
+ <refpurpose>
+      get information about hardware buffer ptr
+ </refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+ <title>Synopsis</title>
+  <funcsynopsis><funcprototype>
+   <funcdef>int <function>via_dsp_ioctl_ptr </function></funcdef>
+   <paramdef>struct via_info * <parameter>card</parameter></paramdef>
+   <paramdef>struct via_channel * <parameter>chan</parameter></paramdef>
+   <paramdef>void __user * <parameter>arg</parameter></paramdef>
+  </funcprototype></funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+ <title>Arguments</title>
+ <variablelist>
+  <varlistentry>
+   <term><parameter>card</parameter></term>
+   <listitem>
+    <para>
+      Private info for specified board
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>chan</parameter></term>
+   <listitem>
+    <para>
+      pointer to channel-specific info
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><parameter>arg</parameter></term>
+   <listitem>
+    <para>
+      user buffer for returned information
+    </para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+</refsect1>
+<refsect1>
+ <title>Description</title>
+ <para>
+   Handles SNDCTL_DSP_GETIPTR and SNDCTL_DSP_GETOPTR.
+ </para>
+</refsect1>
+<refsect1>
+ <title>Locking</title>
+ <para>
+    inside card-&gt;syscall_sem
+ </para>
+</refsect1>
+</refentry>
+
+  </chapter>
+
+</book>
+
+
