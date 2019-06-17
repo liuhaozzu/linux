@@ -18,51 +18,32 @@
         **最终，BootLoader的主要功能是【加载内核文件】**
         
 ## 加载内核检测硬件与initramfs的功能
-[root@centos7-1 boot]# lsinitrd /boot/initramfs-3.10.0-514.el7.x86_64.img
-Image: /boot/initramfs-3.10.0-514.el7.x86_64.img: 20M
-========================================================================
-Early CPIO image
-========================================================================
-drwxr-xr-x   3 root     root            0 Mar 19  2017 .
--rw-r--r--   1 root     root            2 Mar 19  2017 early_cpio
-drwxr-xr-x   3 root     root            0 Mar 19  2017 kernel
-drwxr-xr-x   3 root     root            0 Mar 19  2017 kernel/x86
-drwxr-xr-x   2 root     root            0 Mar 19  2017 kernel/x86/microcode
--rw-r--r--   1 root     root        22528 Mar 19  2017 kernel/x86/microcode/GenuineIntel.bin
-========================================================================
-Version: dracut-033-463.el7
 
-Arguments: -f
+### linux将内核解压缩到内存中
+利用内核的功能开始测试与驱动各个周边设备，包括存储设备，cpu，网卡，声卡  
+此时，linux内核会 以自己的功能重新检测一次硬件，而不一定会用BIOS检测到的硬件信息。也就是说，内核此时，才开始接管BIOS的工作。
 
-dracut modules:
-bash
-nss-softokn
-i18n
-network
-ifcfg
-drm
-plymouth
-dm
-kernel-modules
-lvm
-resume
-rootfs-block
-terminfo
-udev-rules
-biosdevname
-systemd
-usrmount
-base
-fs-lib
-shutdown
-========================================================================
-drwxr-xr-x  12 root     root            0 Mar 19  2017 .
-crw-r--r--   1 root     root       5,   1 Mar 19  2017 dev/console
-crw-r--r--   1 root     root       1,  11 Mar 19  2017 dev/kmsg
-crw-r--r--   1 root     root       1,   3 Mar 19  2017 dev/null
-lrwxrwxrwx   1 root     root            7 Mar 19  2017 bin -> usr/bin
-drwxr-xr-x   2 root     root            0 Mar 19  2017 dev
+### linux内核可以动态加载内核模块
+这些模块一般位于/lib/modules/目录下面。由于模块放置在磁盘根目录内，（/lib和/ 不可以在不同的磁盘分区），因此在启动的过程中内核必须是要挂载根目录的。这样才能读取内核模块提供的加载驱动程序功能。并且由于担心影响到磁盘内的文件系统，因此启动过程中根目录是以只读的方式挂载的。
+
+## 问题？
+1. 内核不能识别SATA硬盘，需要加载SATA磁盘的驱动程序，否则无法挂载根目录
+2. 但是SATA的驱动程序在/lib/modules内，你根本无法挂载根目录，又怎么能读取到该目录下的文件呢？
+
+## 虚拟文件系统 initial RAM Disk或Initial RAM Filesystem
+1. 一般文件名为 /boot/initrd或/boot/initramfs 
+2. 该文件的特点：他也能够通过boot loader来加载到内存中，
+3. 然后这个文件会被解压缩并且在内存中模拟成一个根目录。
+4. 此模拟在内存当中的文件系统能够提供一个可执行的程序
+5. 通过该程序来加载启动过程中所最需要的内核模块，通常这些模块就是USB，RAID，LVM，SCSI等文件系统与磁盘接口的驱动程序
+6. 加载完成后，会帮助内核重新调用systemd来开始后续的正常启动流程。
+
+### initramfs文件中的内容
+[root@centos7-1 boot]# lsinitrd /boot/initramfs-3.10.0-514.el7.x86_64.img  
+包含量大区块  
+1. 事先声明的一些数据
+2. 虚拟文件系统
 
 
 
-
+ 
