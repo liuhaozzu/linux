@@ -99,7 +99,7 @@ static int remap_area_pages(unsigned long address, unsigned long phys_addr,
  * caller shouldn't need to know that small detail.
  */
 void * __ioremap(unsigned long phys_addr, unsigned long size, unsigned long flags)
-{
+{/*源码注释：在linux系统中，CPU不能按物理地址来访问存储空间，而必须使用虚拟地址，所以必须“反向”地从物理地址出发找到一片虚存空间并建立映射 */
 	void * addr;
 	struct vm_struct * area;
 	unsigned long offset, last_addr;
@@ -118,7 +118,7 @@ void * __ioremap(unsigned long phys_addr, unsigned long size, unsigned long flag
 	/*
 	 * Don't allow anybody to remap normal RAM that we're using..
 	 */
-	if (phys_addr < virt_to_phys(high_memory)) {
+	if (phys_addr < virt_to_phys(high_memory)) {/*high_memory：是在系统初始化时，根据检测到的物理内存大小设置的物理内存地址的上限（所对应的虚拟地址） */
 		char *t_addr, *t_end;
 		struct page *page;
 

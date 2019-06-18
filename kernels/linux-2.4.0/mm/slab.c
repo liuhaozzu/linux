@@ -182,7 +182,7 @@ struct kmem_cache_s {
 /* 1) each alloc & free */
 	/* full, partial first, then free */
 	struct list_head	slabs;
-	struct list_head	*firstnotfull;
+	struct list_head	*firstnotfull; /*源码注释：指向队列中第一个含有空闲对象的的slab，也就是指向队列中的第二段。当这个指针指向队列头slabs的时候，就表明队列中不存在含有空闲对象slab */
 	unsigned int		objsize;
 	unsigned int	 	flags;	/* constant flags */
 	unsigned int		num;	/* # of objs per slab */
@@ -358,7 +358,7 @@ static kmem_cache_t cache_cache = {
 static struct semaphore	cache_chain_sem;
 
 /* Place maintainer for reaping. */
-static kmem_cache_t *clock_searchp = &cache_cache;
+static kmem_cache_t *clock_searchp = &cache_cache; /*cache_cache: slab队列的队列 */
 
 #define cache_chain (cache_cache.next)
 
@@ -1723,7 +1723,7 @@ void kmem_cache_reap (int gfp_mask)
 	best_len = 0;
 	best_pages = 0;
 	best_cachep = NULL;
-	searchp = clock_searchp;
+	searchp = clock_searchp; /*源码注解：并不是每次都扫描整个cache_cache,而只是扫描其中的一部分slab队列，所以需要有个全局变量来记录下一次扫描的起点，这就是clock_searchp */
 	do {
 		unsigned int pages;
 		struct list_head* p;

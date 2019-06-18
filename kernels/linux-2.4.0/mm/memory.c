@@ -1018,13 +1018,13 @@ void swapin_readahead(swp_entry_t entry)
 static int do_swap_page(struct mm_struct * mm,
 	struct vm_area_struct * vma, unsigned long address,
 	pte_t * page_table, swp_entry_t entry, int write_access)
-{
+{/*源码注释：当物理页面在内存中时，页面表项是一个pte_t结构，指向一个内存页面；而当物理页面不再内存中时，则是一个swp_entry_t结构，指向一个盘上页面。二者本质是都是32位无符号整数，这里的“不在内存中”是逻辑意义上的，是对CPU的页面映射硬件而言的，实际上这个页面很可能在不活跃页面队列，甚至在活跃页面队列中 */
 	struct page *page = lookup_swap_cache(entry);
 	pte_t pte;
 
 	if (!page) {
 		lock_kernel();
-		swapin_readahead(entry);
+		swapin_readahead(entry);/*源码注释：就近原则，从磁盘读入数据时，磁盘寻道是不可避免的，那就干脆一次性多度几个页面进来，称为一个页面集群（cluster）。即预读，预读进来的页面都暂时链入活跃页面队列以及swapper_space的换入换出队列中，如果实际中确实不需要就会由进程kswapd和kreclaimd在一段时间后加以回收 */
 		page = read_swap_cache(entry);
 		unlock_kernel();
 		if (!page)
@@ -1036,7 +1036,8 @@ static int do_swap_page(struct mm_struct * mm,
 
 	mm->rss++;
 
-	pte = mk_pte(page, vma->vm_page_prot);
+	pte = mk_
+	pte(page, vma->vm_page_prot);
 
 	/*
 	 * Freeze the "shared"ness of the page, ie page_count + swap_count.
