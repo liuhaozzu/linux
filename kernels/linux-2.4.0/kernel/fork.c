@@ -701,7 +701,7 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 
 fork_out:
 	if ((clone_flags & CLONE_VFORK) && (retval > 0)) 
-		down(&sem);
+		down(&sem); /*源码注释：信号量：1.当子进程在通过execve() 执行一个新的可执行程序时；2.子进程在通过exit()退出系统时，会执行up 释放信号量*/
 	return retval;
 
 bad_fork_cleanup_sighand:

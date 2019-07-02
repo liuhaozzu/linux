@@ -126,14 +126,14 @@ static inline int do_getname(const char *filename, char *page)
 	return retval;
 }
 
-char * getname(const char * filename)
+char * getname(const char * filename)/*源码注释：为什么要专门分配一个物理页面作为缓冲区呢？1. 这个字符串确实有可能相当长；2. 进行系统空间堆栈的大小大约是7KB，不能滥用，不能直接定义一个4KB的局部变量 */
 {
 	char *tmp, *result;
 
 	result = ERR_PTR(-ENOMEM);
-	tmp = __getname();
+	tmp = __getname();/*源码注释：分配一个屋里页面作为缓冲区 */
 	if (tmp)  {
-		int retval = do_getname(filename, tmp);
+		int retval = do_getname(filename, tmp);/*源码注释：从用户空间拷贝字符串 */
 
 		result = tmp;
 		if (retval < 0) {

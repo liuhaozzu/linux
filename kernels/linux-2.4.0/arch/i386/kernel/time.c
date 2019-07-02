@@ -456,7 +456,7 @@ static int use_tsc;
  * Time Stamp Counter value at the time of the timer interrupt, so that
  * we later on can estimate the time of day more exactly.
  */
-static void timer_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+static void timer_interrupt(int irq, void *dev_id, struct pt_regs *regs)/*源码注释：时钟中断处理函数，执行过程中不允许中断 */
 {
 	int count;
 

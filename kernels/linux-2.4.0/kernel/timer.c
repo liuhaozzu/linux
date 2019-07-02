@@ -673,7 +673,7 @@ void timer_bh(void)
 
 void do_timer(struct pt_regs *regs)
 {
-	(*(unsigned long *)&jiffies)++;
+	(*(unsigned long *)&jiffies)++;/*源码注释：不直接使用jiffies++? 这是因为代码的作者要使将递增的jiffies的操作在一条指令中实现，成为一个“原子”的操作。gcc将这条语句翻译成一条对内存单元的inc指令。若采用jiffies++，则有可能会被编译成先将jiffies的内容MOV至寄存器EAX，然后递增，再MOV回去。二者所耗费的CPU时钟周期几乎是相同的，但前者保证了操作的“原子性” */
 #ifndef CONFIG_SMP
 	/* SMP process accounting uses the local APIC timer */
 

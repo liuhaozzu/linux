@@ -49,7 +49,7 @@ static inline long do_mmap2(
 	struct file * file = NULL;
 
 	flags &= ~(MAP_EXECUTABLE | MAP_DENYWRITE);
-	if (!(flags & MAP_ANONYMOUS)) {
+	if (!(flags & MAP_ANONYMOUS)) {/*源码注释：例外：当调用参数flags中把标志位MAP_ANONYMOUS设成1，表示没有文件，实际上只是用来“圈地”，即在指定的位置上分配空间。 */
 		file = fget(fd);
 		if (!file)
 			goto out;
